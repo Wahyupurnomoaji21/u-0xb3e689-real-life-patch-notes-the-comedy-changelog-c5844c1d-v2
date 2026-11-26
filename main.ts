@@ -8,11 +8,23 @@ import { fileURLToPath } from "node:url";
 
 // The bug: crossing a doorway wipes the errand you walked in for.
 // No autosave, no undo history — the reason is simply gone.
-// 118 characters, inside the competition's 160-character gate.
 const VERSION = "v3.0.2";
 const FIX =
   "fixed a bug where walking into a room instantly deleted the reason you came in; the reason is not recoverable.";
-const ENTRY = `${VERSION}: ${FIX}`;
+
+// The competition caps a one-liner at 160 characters; refuse to emit
+// anything longer instead of silently shipping a truncated entry.
+const MAX_ENTRY_CHARS = 160;
+
+function buildEntry(version: string, fix: string): string {
+  const entry = `${version}: ${fix}`;
+  if (entry.length > MAX_ENTRY_CHARS) {
+    throw new Error(
+      `entry is ${entry.length} characters, over the ${MAX_ENTRY_CHARS}-character limit`,
+    );
+  }
+  return entry;
+}
 
 // Resolve every path from this file's own location, never from the
 // process working directory: the grader runs the program from elsewhere.
@@ -21,4 +33,4 @@ const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? join(repoDir, "output");
 const entryPath = join(outputDir, "entry.txt");
 
 mkdirSync(outputDir, { recursive: true });
-writeFileSync(entryPath, ENTRY, "utf8");
+writeFileSync(entryPath, buildEntry(VERSION, FIX), "utf8");
